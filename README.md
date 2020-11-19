@@ -21,3 +21,6 @@ Fed up of having to log onto the till at EOD, run the reports, scribble them ont
 * Email sender
 * Email recipient
 * Run!
+
+--------------------------------
+See what I'm working on with this in [Notion](https://www.notion.so/1b04b98a9345471291511e2c193a57a0?v=39ac76f5e6f843098677bad2921a0897)
