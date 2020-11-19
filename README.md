@@ -1,5 +1,5 @@
 # mymicros-scraper
-## Sript to scrape and email reports from MyMicros/R&A
+## Script to scrape and email reports from MyMicros/R&A
 
 Fed up of having to log onto the till at EOD, run the reports, scribble them onto a sheet of paper and then trek downstairs to the laptop to send them over to multiple people via email, I devised a solution to extract the reports I needed from the MyMicros reporting system and email them automatically
 
