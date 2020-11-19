@@ -11,6 +11,10 @@ from pathlib import Path
 ### configuration of Oracle MyMicros, and then email
 ### them to multiple recipients 
 
+# Requires environment variables *2 to be set:-
+# MYMICROS_PW - password for MyMicros/R&A
+# SENDGRID_API_kEY - self-explanatory! 
+
 ## Using Twill to open the webpage and scrape the data
 
 debug('http',1)
@@ -23,7 +27,7 @@ showforms()
 fv('login','action','login')
 fv('login', 'usr','***username***')
 fv('login', 'cpny','***company***')
-fv('login', 'pwd','*password***')
+fv('login', 'pwd', os.environ.get('MYMICROS_PW'))
 fv('login','LOGIN','')
 
 submit()
@@ -92,7 +96,7 @@ message = Mail(
 try:
     print("Sending email...")
     sg = SendGridAPIClient(
-        '***API KEY or Env Var***')
+        os.environ.get('SENDGRID_API_KEY'))
     response = sg.send(message)
     print("Response Status Code: " + response.status_code)
     print("Response Body: " + response.body)
@@ -117,7 +121,7 @@ message = Mail(
 try:
     print("Sending email...")
     sg = SendGridAPIClient(
-        '***API KEY or Env Var***')
+        os.environ.get('SENDGRID_API_KEY'))
     response = sg.send(message)
     print("Response Status Code: " + response.status_code)
     print("Response Body: " + response.body)
