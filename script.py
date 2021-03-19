@@ -7,126 +7,117 @@ from sendgrid.helpers.mail import Mail
 from sendgrid import SendGridAPIClient
 from pathlib import Path
 
-### Script to extract two reports from our company's
-### configuration of Oracle MyMicros, and then email
-### them to multiple recipients 
 
-# Requires environment variables *2 to be set:-
-# MYMICROS_PW - password for MyMicros/R&A
-# SENDGRID_API_kEY - self-explanatory! 
+### Script to extract two reports from our company's
+### configuration of Oracle MyMicros, and then email
+### them to multiple recipients
 
-## Using Twill to open the webpage and scrape the data
+## healthchecks.io monitoring
 
-debug('http',1)
-go("https://caffenero.simphony.eu/login.jsp")
-showforms()
+URL = "https://hc-ping.com/UUID"
 
-# Logs into the MyMicros portal 
-# POSTing the login form 
+## URL for your version of MyMicros/Simphony R&A
+## Your url might be different depending on org
+## other examples could be:
+## https://www.mymicros.net
+## https://YOURORG.simphony.eu
+## https://YOURORG.hospitality.oracleindustry.com/login.jsp
+myMicrosURL = "https://www.mymicroseu2.net/login.jsp"
 
-fv('login','action','login')
-fv('login', 'usr','***username***')
-fv('login', 'cpny','***company***')
-fv('login', 'pwd', os.environ.get('MYMICROS_PW'))
-fv('login','LOGIN','')
+def do_work():
+    # Requires environment variables *2 to be set:-
+    # MYMICROS_PW - password for MyMicros/R&A
+    # SENDGRID_API_kEY - self-explanatory!
 
-submit()
-info()
+    ## Using Twill to open the webpage and scrape the data
 
-# set the names for the reports
-# as in this case they will also be
-# saved to disk
-date = date.today().strftime('%d-%m-%Y')
+    debug('http',1)
+    go(myMicrosURL)
+    showforms()
 
-report1=(str(date+'-report1'+'.html'))
-report2=(str(date+'-report2'+'.html'))
+    # Logs into the MyMicros portal
+    # POSTing the login form
 
-# get the reports and save to current dir on disk
-# in this instance you must visit the first site to run the report
-# and then the second and third will be the reports only in html 
-go("https://caffenero.simphony.eu/finengine/reportAction.do?method=run&reportID=3")
-go('https://caffenero.simphony.eu/finengine/reportRunAction.do?rptroot=3&reportID=EAME_CurrentOpsReport_VAT&method=run')
-save_html(report1)
-go("https://caffenero.simphony.eu/finengine/reportRunAction.do?method=run&reportID=CurrentReceiptsDetail&rptroot=3")
-save_html(report2)
+    fv('login','action','login')
+    fv('login', 'usr','***username***')
+    fv('login', 'cpny','***company***')
+    fv('login', 'pwd', os.environ.get('MYMICROS_PW'))
+    fv('login','LOGIN','')
 
-## merge two html files together
-## to form single message body
+    submit()
+    info()
 
-with open(report1) as fp: 
-    data = fp.read() 
-  
-with open(report2) as fp: 
-    data2 = fp.read() 
-  
-# Merging the two reports from next line 
-data += "\n"
-data += data2 
+    # set the names for the reports
+    # as in this case they will also be
+    # saved to disk
+    global date
+    date = date.today().strftime('%d-%m-%Y')
+    report1=(str(date+'-report1'+'.html'))
+    report2=(str(date+'-report2'+'.html'))
 
-reportWhole =(str(date+'-reportWhole'+'.html'))
+    # get the reports and save to current dir on disk
+    # in this instance you must visit the first site to run the report
+    # and then the second and third will be the reports only in html
+    # 
+    # to get these, you will be best loggin into myMicros with a web browser
+    # and opening dev tools, network inspector. Perform a request (open a report)
+    # and copy the URLs where the response is the HTML of report you desire
+    go("https://www.mymicroseu2.net/finengine/reportAction.do?method=run&reportID=1")
+    go('https://www.mymicroseu2.net/finengine/reportRunAction.do?rptroot=1&reportID=EAME_DailyOpsReport_VAT&method=run')
+    save_html(report1)
+    go("https://www.mymicroseu2.net/finengine/reportRunAction.do?method=run&reportID=ReceiptsDailyDetail&rptroot=1")
+    save_html(report2)
 
-# write two reports to disk
-with open (reportWhole, 'w') as fp: 
-    fp.write(data) 
+    ## merge two html files together
+    ## to form single message body
+    with open(report1) as fp:
+        data = fp.read()
+    with open(report2) as fp:
+        data2 = fp.read()
 
-## Send emails
+    # Merging the two reports from next line
+    data += "\n"
+    data += data2
 
-# this script sends two emails, one containing
-# both reports merged together, and another
-# sending just the second report to a different
-# recipient who refuses to move to c21.
+    reportWhole =(str(date+'-reportWhole'+'.html'))
 
-# prepare email for me
-with open(reportWhole, 'r') as fp:
-    messageContent = fp.read()
+    # write two reports to disk
+    with open (reportWhole, 'w') as fp:
+        fp.write(data)
 
-# preparing email subject
-# in the format 'Sales report for dd-mm-yyyy'
-sub = 'Sales report for ' + date
+    ## Send emails
+    with open(reportWhole, 'r') as fp:
+        messageContent = fp.read()
 
-# preparing message payload
-message = Mail(
-    from_email=('***from_email***'),
-    to_emails=('***to_email***'),
-    subject=sub,
-    html_content=messageContent
-    )
+    # preparing email subject
+    # in the format 'Sales report for dd-mm-yyyy'
+    sub = 'Sales report for ' + date
 
-# send email
+    # preparing message payload
+    message = Mail(
+        from_email=('foo@bar.com'),
+        to_emails=('bar@foo.com'),
+        subject=sub,
+        html_content=messageContent
+        )
+
+    # send email
+    try:
+        print("Sending email to bar@foo.com)
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))        
+        response = sg.send(message)
+        print("Response Status Code: " , response.status_code)
+        print("Response Body: " , response.body)
+        print("Response Headers:  " , response.headers)
+    except Exception as e:
+        print(e)
+
+
+    return True
+
+success = False
+
 try:
-    print("Sending email...")
-    sg = SendGridAPIClient(
-        os.environ.get('SENDGRID_API_KEY'))
-    response = sg.send(message)
-    print("Response Status Code: " + response.status_code)
-    print("Response Body: " + response.body)
-    print("Response Headers:  " + response.headers)
-except Exception as e:
-    print(e)
-
-
-# email to recipient from c20.
-
-with open(report2, 'r') as fp:
-    messageContent = fp.read()
-# preparing message payload
-message = Mail(
-    from_email=('***from_email***'),
-    to_emails=('***to_email***'),
-    subject=sub,
-    html_content=messageContent
-    )
-
-# send email
-try:
-    print("Sending email...")
-    sg = SendGridAPIClient(
-        os.environ.get('SENDGRID_API_KEY'))
-    response = sg.send(message)
-    print("Response Status Code: " + response.status_code)
-    print("Response Body: " + response.body)
-    print("Response Headers:  " + response.headers)
-except Exception as e:
-    print(e)
-
-
+    success = do_work()
+finally:
+    requests.get(URL if success else URL + "/fail")
